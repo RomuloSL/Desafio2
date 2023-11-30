@@ -1,0 +1,108 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+// Estrutura que representa um bloco de memória livre
+typedef struct Node {
+    int start;
+    int size;
+    struct Node* next;
+} Node;
+
+// Função para iniciar a lista de memória livre com uma ocupação aleatória
+Node* initializeMemory(int memorySize) {
+    Node* memory = (Node*)malloc(sizeof(Node));
+    memory->start = 0;
+    memory->size = rand() % (memorySize / 2) + (memorySize / 2);  // Inicia aleatoriamente a primeira região de memória livre
+    memory->next = NULL;
+    return memory;
+}
+
+// Função que imprimi a lista de memória livre
+void printMemory(Node* memory) {
+    while (memory != NULL) {
+        printf("Start: %d, Size: %d\n", memory->start, memory->size);
+        memory = memory->next;
+    }
+    printf("\n");
+}
+
+// Função para alocar memória usando o algoritmo First-Fit
+Node* allocateFirstFit(Node* memory, int demand) {
+    Node* current = memory;
+
+    while (current != NULL) {
+        if (current->size >= demand) {
+            // Espaço livre encontrado, aloca a memória
+            current->start += demand;
+            current->size -= demand;
+            return memory;
+        }
+        current = current->next;
+    }
+
+    // Não há espaço livre suficiente
+    printf("Não há espaço livre suficiente para alocar %d bytes.\n", demand);
+    return memory;
+}
+
+// Função para alocar memória usando o algoritmo Best-Fit
+Node* allocateBestFit(Node* memory, int demand) {
+    Node* bestFit = NULL;
+    Node* current = memory;
+
+    while (current != NULL) {
+        if (current->size >= demand && (bestFit == NULL || current->size < bestFit->size)) {
+            // Encontrou um novo melhor ajuste
+            bestFit = current;
+        }
+        current = current->next;
+    }
+
+    if (bestFit != NULL) {
+        // Espaço livre encontrado, aloca a memória
+        bestFit->start += demand;
+        bestFit->size -= demand;
+    } else {
+        // Não há espaço livre suficiente
+        printf("Não há espaço livre suficiente para alocar %d bytes.\n", demand);
+    }
+
+    return memory;
+}
+
+// Função principal
+int main() {
+    int memorySize = 1000;  // Tamanho total da memória
+    Node* memory = initializeMemory(memorySize);
+    int choice;
+
+    do {
+        printf("Escolha a estratégia de alocação:\n");
+        printf("1. First-Fit\n");
+        printf("2. Best-Fit\n");
+        printf("0. Sair\n");
+        scanf("%d", &choice);
+
+        if (choice == 1 || choice == 2) {
+            int demand;
+            printf("Informe a demanda de espaço livre (0 para sair): ");
+            scanf("%d", &demand);
+
+            if (demand > 0) {
+                if (choice == 1) {
+                    memory = allocateFirstFit(memory, demand);
+                } else {
+                    memory = allocateBestFit(memory, demand);
+                }
+
+                printMemory(memory);
+            }
+        } else if (choice != 0) {
+            printf("Escolha inválida. Tente novamente.\n");
+        }
+    } while (choice != 0);
+
+    free(memory);  // Libera a memória alocada para a lista de memória livre
+
+    return 0;
+}
